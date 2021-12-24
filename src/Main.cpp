@@ -15,176 +15,182 @@ MyGame* game = new MyGame();
 Ball* ball = new Ball();
 
 static int on_receive(void* socket_ptr) {
-    TCPsocket socket = (TCPsocket)socket_ptr;
+	TCPsocket socket = (TCPsocket)socket_ptr;
 
-    const int message_length = 1024;
+	const int message_length = 1024;
 
-    char message[message_length];
-    int received;
+	char message[message_length];
+	int received;
 
-    // TODO: while(), rather than do
-    do {
-        received = SDLNet_TCP_Recv(socket, message, message_length);
-        message[received] = '\0';
+	// TODO: while(), rather than do
+	do {
+		received = SDLNet_TCP_Recv(socket, message, message_length);
+		message[received] = '\0';
 
-        char* pch = strtok(message, ",");
+		char* pch = strtok(message, ",");
 
-        // get the command, which is the first string in the message
-        string cmd(pch);
+		// get the command, which is the first string in the message
+		string cmd(pch);
 
-        // then get the arguments to the command
-        vector<string> args;
+		// then get the arguments to the command
+		vector<string> args;
 
-        while (pch != NULL) {
-            pch = strtok(NULL, ",");
+		while (pch != NULL) {
+			pch = strtok(NULL, ",");
 
-            if (pch != NULL) {
-                args.push_back(string(pch));
-            }
-        }
+			if (pch != NULL) {
+				args.push_back(string(pch));
+			}
+		}
 
-        game->on_receive(cmd, args);
+		game->on_receive(cmd, args);
 
-        if (cmd == "exit") {
-            break;
-        }
+		if (cmd == "exit") {
+			break;
+		}
 
-    } while (received > 0 && is_running);
+	} while (received > 0 && is_running);
 
-    return 0;
+	return 0;
 }
 
 static int on_send(void* socket_ptr) {
-    TCPsocket socket = (TCPsocket)socket_ptr;
+	TCPsocket socket = (TCPsocket)socket_ptr;
 
-    while (is_running) {
-        if (game->messages.size() > 0) {
-            string message = "CLIENT_DATA";
+	while (is_running) {
+		if (game->messages.size() > 0) {
+			string message = "CLIENT_DATA";
 
-            for (auto m : game->messages) {
-                message += "," + m;
-            }
+			for (auto m : game->messages) {
+				message += "," + m;
+			}
 
-            game->messages.clear();
+			game->messages.clear();
 
-            cout << "Sending_TCP: " << message << endl;
+			cout << "Sending_TCP: " << message << endl;
 
-            SDLNet_TCP_Send(socket, message.c_str(), message.length());
-        }
+			SDLNet_TCP_Send(socket, message.c_str(), message.length());
+		}
 
-        SDL_Delay(1);
-    }
+		SDL_Delay(1);
+	}
 
-    return 0;
+	return 0;
 }
 
 void loop(SDL_Renderer* renderer) {
-    SDL_Event event;
+	SDL_Event event;
 
-    while (is_running) {
-        // input
-        while (SDL_PollEvent(&event)) {
-            if ((event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) && event.key.repeat == 0) {
-                game->input(event);
+	while (is_running) {
+		// input
+		while (SDL_PollEvent(&event)) {
+			if ((event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) && event.key.repeat == 0) {
+				game->input(event);
+				bool gamePause = false;
+				switch (event.key.keysym.sym) {
+				case SDLK_ESCAPE:
+					//is_running = false;
+					break;
+				default:
+					break;
+				}
+			}
+			if (event.type == SDL_QUIT) {
+				//is_running = false;
+			}
+		}
 
-                switch (event.key.keysym.sym) {
-                    case SDLK_ESCAPE:
-                        is_running = false;
-                        break;
-                    default:
-                        break;
-                }
-            }
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+		SDL_RenderClear(renderer);
 
-            if (event.type == SDL_QUIT) {
-                is_running = false;
-            }
-        }
+		game->update();
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
+		game->render(renderer);
 
-        game->update();
+		SDL_RenderPresent(renderer);
 
-        game->render(renderer);
-
-        SDL_RenderPresent(renderer);
-
-        SDL_Delay(17);
-    }
+		SDL_Delay(17);
+	}
 }
 
 int run_game() {
-    SDL_Window* window = SDL_CreateWindow(
-        "Multiplayer Pong Client",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        800, 600,
-        SDL_WINDOW_SHOWN
-    );
-    //2,400
-    // 3 * 800 = 2,400 / 4
-    if (nullptr == window) {
-        std::cout << "Failed to create window" << SDL_GetError() << std::endl;
-        return -1;
-    }
+	SDL_Window* window = SDL_CreateWindow(
+		"Multiplayer Pong Client",
+		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+		800, 600,//600 is height
+		SDL_WINDOW_SHOWN
+	);
+	//2,400
+	// 3 * 800 = 2,400 / 4
+	if (nullptr == window) {
+		std::cout << "Failed to create window" << SDL_GetError() << std::endl;
+		return -1;
+	}
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-    if (nullptr == renderer) {
-        std::cout << "Failed to create renderer" << SDL_GetError() << std::endl;
-        return -1;
-    }
-
-    loop(renderer);
-
-    return 0;
+	if (nullptr == renderer) {
+		std::cout << "Failed to create renderer" << SDL_GetError() << std::endl;
+		return -1;
+	}
+	//game->initAudio();
+	//game->play_background_music();
+	loop(renderer);
+	if (game->game_over()) {
+		is_running = false;
+		std::cout << "yes game is over!";
+	}
+	return 0;
 }
 
 int main(int argc, char** argv) {
 
-    // Initialize SDL
-    if (SDL_Init(0) == -1) {
-        printf("SDL_Init: %s\n", SDL_GetError());
-        exit(1);
-    }
-    int result = TTF_Init();
-    // Initialize SDL_net
-    if (SDLNet_Init() == -1) {
-        printf("SDLNet_Init: %s\n", SDLNet_GetError());
-        exit(2);
-    }
+	// Initialize SDL
+	if (SDL_Init(0) == -1) {
+		printf("SDL_Init: %s\n", SDL_GetError());
+		exit(1);
+	}
+	int result = TTF_Init();
+	game->initFont();
+	//game->game_over();
 
-    IPaddress ip;
+	// Initialize SDL_net
+	if (SDLNet_Init() == -1) {
+		printf("SDLNet_Init: %s\n", SDLNet_GetError());
+		exit(2);
+	}
+	IPaddress ip;
 
-    // Resolve host (ip name + port) into an IPaddress type
-    if (SDLNet_ResolveHost(&ip, IP_NAME, PORT) == -1) {
-        printf("SDLNet_ResolveHost: %s\n", SDLNet_GetError());
-        exit(3);
-    }
+	// Resolve host (ip name + port) into an IPaddress type
+	if (SDLNet_ResolveHost(&ip, IP_NAME, PORT) == -1) {
+		printf("SDLNet_ResolveHost: %s\n", SDLNet_GetError());
+		exit(3);
+	}
 
-    // Open the connection to the server
-    TCPsocket socket = SDLNet_TCP_Open(&ip);
+	// Open the connection to the server
+	TCPsocket socket = SDLNet_TCP_Open(&ip);
 
-    if (!socket) {
-        printf("SDLNet_TCP_Open: %s\n", SDLNet_GetError());
-        exit(4);
-    }
+	if (!socket) {
+		printf("SDLNet_TCP_Open: %s\n", SDLNet_GetError());
+		exit(4);
+	}
 
-    SDL_CreateThread(on_receive, "ConnectionReceiveThread", (void*)socket);
-    SDL_CreateThread(on_send, "ConnectionSendThread", (void*)socket);
-    
-    run_game();
+	SDL_CreateThread(on_receive, "ConnectionReceiveThread", (void*)socket);
+	SDL_CreateThread(on_send, "ConnectionSendThread", (void*)socket);
 
-    delete game;
+	run_game();
 
-    // Close connection to the server
-    SDLNet_TCP_Close(socket);
+	delete game;
 
-    // Shutdown SDL_net
-    SDLNet_Quit();
-  
-    // Shutdown SDL
-    SDL_Quit();
+	// Close connection to the server
+	SDLNet_TCP_Close(socket);
 
-    return 0;
+	// Shutdown SDL_net
+	SDLNet_Quit();
+
+	// Shutdown SDL
+
+	SDL_Quit();
+
+	return 0;
 }
