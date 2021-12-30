@@ -26,19 +26,29 @@ public:
 	SDL_Rect FirstPlayerScore; //create a rect
 	SDL_Rect SecondPlayerScore; //create a rect
 	Mix_Chunk* sound = Mix_LoadWAV("backgroundretro.wav");
-	int firstPlayerScore = 0;
+	int oldPlayer1Score = 0;
 	int secondPlayerScore = 0;
 	const char* firstPlayerScoreText = "0";
 	const char* secondPlayerScoreText = "0";
+	int newPlayer1Score = 0;
+	int newPlayer2Score = 0;
+	bool player1ScoreChanged = false;
+	bool player2ScoreChanged = false;
+	bool player1SameScore = false;
+	bool player2SameScore = false;
+	bool isGameOver = false;
 	TTF_Font* font;
 	SDL_Color blue = { 0, 0, 255 };
-	std::string s;
-	std::string s1;
-	bool notPause = true;
-	const char* backgroundmusic = "backgroundretro.wav";
-	const char* scoresoundeffect = "test.wav";
+	std::string convertPlayer1Score;
+	std::string convertPlayer2Score;
+	//bool notPause = true;
+	const char* backgroundMusic = "backgroundretro.wav";
+	const char* scoreSoundEffect = "test.wav";
 	int repeatAudio;
-
+	//bool player1Active = false;
+	//bool player2Active = false;
+	//bool loaded = false;
+	SDL_Surface* pSurface;
 public:
 	std::vector<std::string> messages;
 
@@ -49,17 +59,19 @@ public:
 	void render(SDL_Renderer* renderer);
 
 	void ball(SDL_Renderer* renderer, int cx, int cy, float r);
-	//maybe name it renderScore
 	void renderScore(SDL_Renderer* renderer, const char* firstPlayerScore, const char* secondPlayerScore);
 	//add an arg for colour so you can use different colours.
-	void initFont();
-	void initAudio();
+	void init_font();
+	void init_audio();
 	void play_sound(int repeatAudio);
-	bool game_over();;
+	void game_over();;
 	void play_background_music();
 	void select_audio(const char* audioFileName);
 	void play_all_audio();
 	void pause_menu();
+	bool display_text(SDL_Renderer* renderer, const char* textToDisply);
+	bool loadFromRenderedText(std::string textureText, SDL_Color textColor);
+	bool loadMedia();
 };
 
 #endif

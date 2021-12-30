@@ -12,7 +12,7 @@ const Uint16 PORT = 55555;
 bool is_running = true;
 
 MyGame* game = new MyGame();
-Ball* ball = new Ball();
+//Ball* ball = new Ball();
 
 static int on_receive(void* socket_ptr) {
 	TCPsocket socket = (TCPsocket)socket_ptr;
@@ -70,8 +70,8 @@ static int on_send(void* socket_ptr) {
 			cout << "Sending_TCP: " << message << endl;
 
 			SDLNet_TCP_Send(socket, message.c_str(), message.length());
+			
 		}
-
 		SDL_Delay(1);
 	}
 
@@ -80,23 +80,21 @@ static int on_send(void* socket_ptr) {
 
 void loop(SDL_Renderer* renderer) {
 	SDL_Event event;
-
 	while (is_running) {
 		// input
 		while (SDL_PollEvent(&event)) {
 			if ((event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) && event.key.repeat == 0) {
 				game->input(event);
-				bool gamePause = false;
 				switch (event.key.keysym.sym) {
 				case SDLK_ESCAPE:
-					//is_running = false;
+					is_running = false;
 					break;
 				default:
 					break;
 				}
 			}
 			if (event.type == SDL_QUIT) {
-				//is_running = false;
+				is_running = false;
 			}
 		}
 
@@ -117,11 +115,9 @@ int run_game() {
 	SDL_Window* window = SDL_CreateWindow(
 		"Multiplayer Pong Client",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		800, 600,//600 is height
+		800, 600,
 		SDL_WINDOW_SHOWN
 	);
-	//2,400
-	// 3 * 800 = 2,400 / 4
 	if (nullptr == window) {
 		std::cout << "Failed to create window" << SDL_GetError() << std::endl;
 		return -1;
@@ -133,13 +129,10 @@ int run_game() {
 		std::cout << "Failed to create renderer" << SDL_GetError() << std::endl;
 		return -1;
 	}
-	//game->initAudio();
+	//game->init_audio();
 	//game->play_background_music();
 	loop(renderer);
-	if (game->game_over()) {
-		is_running = false;
-		std::cout << "yes game is over!";
-	}
+
 	return 0;
 }
 
@@ -151,8 +144,8 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 	int result = TTF_Init();
-	game->initFont();
-	//game->game_over();
+	game->init_font();
+
 
 	// Initialize SDL_net
 	if (SDLNet_Init() == -1) {
@@ -184,7 +177,9 @@ int main(int argc, char** argv) {
 
 	// Close connection to the server
 	SDLNet_TCP_Close(socket);
-
+	if (game->isGameOver) {
+		SDLNet_TCP_Close(socket);
+	}
 	// Shutdown SDL_net
 	SDLNet_Quit();
 
