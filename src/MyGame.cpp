@@ -25,7 +25,7 @@ void MyGame::on_receive(std::string cmd, std::vector<std::string>& args) {
 				oldPlayer1Score = stoi(args.at(0));
 				//select_audio(scoreSoundEffect);
 				//play_sound(0);
-				secondPlayerScore = stoi(args.at(1));
+				oldSecondPlayerScore = stoi(args.at(1));
 				//select_audio(scoreSoundEffect);
 				//play_sound(0);
 			}
@@ -81,7 +81,7 @@ void MyGame::update() {
 	convertPlayer1Score = std::to_string(oldPlayer1Score);
 	firstPlayerScoreText = convertPlayer1Score.c_str();
 
-	convertPlayer2Score = std::to_string(secondPlayerScore);
+	convertPlayer2Score = std::to_string(oldSecondPlayerScore);
 	secondPlayerScoreText = convertPlayer2Score.c_str();
 	game_over();
 }
@@ -146,10 +146,9 @@ void MyGame::renderScore(SDL_Renderer* renderer, const char* firstPlayerScoreTex
 			firstPlayer = SDL_CreateTextureFromSurface(renderer, surfaceScore1);
 			SDL_QueryTexture(firstPlayer, NULL, NULL, &w, &h);
 			FirstPlayerScore.x = 50, FirstPlayerScore.y = 50, FirstPlayerScore.w = w, FirstPlayerScore.h = h;
-			SDL_FreeSurface(surfaceScore1);
 			SDL_RenderCopy(renderer, firstPlayer, NULL, &FirstPlayerScore);
+			SDL_FreeSurface(surfaceScore1);
 			SDL_DestroyTexture(firstPlayer);
-			//SDL_RenderPresent(renderer);
 			player1ScoreChanged = false;
 		}
 		else {
@@ -203,11 +202,10 @@ void MyGame::play_background_music() {
 	play_sound(-1);
 }
 void MyGame::game_over() {
-	if (oldPlayer1Score == 5 || secondPlayerScore == 5) {
+	if (oldPlayer1Score == 7 || oldSecondPlayerScore == 7) {
 		isGameOver = true;
 	}
 }
-
 
 bool MyGame::display_text(SDL_Renderer* renderer, const char* textToDisply)
 {
@@ -255,13 +253,6 @@ bool MyGame::display_text(SDL_Renderer* renderer, const char* textToDisply)
 		//SDL_RenderPresent(renderer);
 	}
 	return true;
-	//int x = 200;
-	//int y = 130;
-	//SDL_Rect dst = { x, y, t_width, t_height };
-	//SDL_RenderCopy(renderer, ftexture, NULL, &dst);
-	//SDL_RenderPresent(renderer);
-
-	//SDL_DestroyTexture(ftexture);
 }
 //void MyGame::destroy() {
 //	Mix_FreeChunk(sound);

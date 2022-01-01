@@ -27,7 +27,7 @@ public:
 	SDL_Rect SecondPlayerScore; //create a rect
 	Mix_Chunk* sound = Mix_LoadWAV("backgroundretro.wav");
 	int oldPlayer1Score = 0;
-	int secondPlayerScore = 0;
+	int oldSecondPlayerScore = 0;
 	const char* firstPlayerScoreText = "0";
 	const char* secondPlayerScoreText = "0";
 	int newPlayer1Score = 0;
@@ -67,11 +67,7 @@ public:
 	void game_over();;
 	void play_background_music();
 	void select_audio(const char* audioFileName);
-	void play_all_audio();
-	void pause_menu();
 	bool display_text(SDL_Renderer* renderer, const char* textToDisply);
-	bool loadFromRenderedText(std::string textureText, SDL_Color textColor);
-	bool loadMedia();
 };
 
 #endif
