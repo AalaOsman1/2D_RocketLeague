@@ -1,8 +1,5 @@
 #include "SDL_net.h"
-
 #include "MyGame.h"
-
-#include "Ball.h"
 #include <SDL_ttf.h>
 using namespace std;
 
@@ -12,7 +9,6 @@ const Uint16 PORT = 55555;
 bool is_running = true;
 
 MyGame* game = new MyGame();
-//Ball* ball = new Ball();
 
 static int on_receive(void* socket_ptr) {
 	TCPsocket socket = (TCPsocket)socket_ptr;
@@ -26,6 +22,7 @@ static int on_receive(void* socket_ptr) {
 	do {
 		received = SDLNet_TCP_Recv(socket, message, message_length);
 		message[received] = '\0';
+		//std::cout << +message << endl;
 
 		char* pch = strtok(message, ",");
 
@@ -44,6 +41,11 @@ static int on_receive(void* socket_ptr) {
 		}
 
 		game->on_receive(cmd, args);
+
+		//std::cout << game->isGameOver << endl;
+		if (!is_running) {
+			break;
+		}
 
 		if (cmd == "exit") {
 			break;
@@ -70,7 +72,7 @@ static int on_send(void* socket_ptr) {
 			cout << "Sending_TCP: " << message << endl;
 
 			SDLNet_TCP_Send(socket, message.c_str(), message.length());
-			
+
 		}
 		SDL_Delay(1);
 	}
@@ -144,6 +146,7 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 	int result = TTF_Init();
+	//srand(SDL_GetTicks());
 	game->init_font();
 
 
@@ -160,6 +163,7 @@ int main(int argc, char** argv) {
 		exit(3);
 	}
 
+
 	// Open the connection to the server
 	TCPsocket socket = SDLNet_TCP_Open(&ip);
 
@@ -171,15 +175,13 @@ int main(int argc, char** argv) {
 	SDL_CreateThread(on_receive, "ConnectionReceiveThread", (void*)socket);
 	SDL_CreateThread(on_send, "ConnectionSendThread", (void*)socket);
 
+
 	run_game();
 
 	delete game;
 
-	// Close connection to the server
 	SDLNet_TCP_Close(socket);
-	if (game->isGameOver) {
-		SDLNet_TCP_Close(socket);
-	}
+
 	// Shutdown SDL_net
 	SDLNet_Quit();
 
