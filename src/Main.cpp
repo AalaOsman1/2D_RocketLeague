@@ -148,8 +148,7 @@ int main(int argc, char** argv) {
 	int result = TTF_Init();
 	//srand(SDL_GetTicks());
 	game->init_font();
-
-
+	game->init_image();
 	// Initialize SDL_net
 	if (SDLNet_Init() == -1) {
 		printf("SDLNet_Init: %s\n", SDLNet_GetError());

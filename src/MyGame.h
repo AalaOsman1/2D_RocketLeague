@@ -7,6 +7,7 @@
 #include <SDL_ttf.h>
 #include "SDL.h"
 #include <SDL_mixer.h>
+#include <SDL_image.h>
 
 static struct GameData {
 	int player1Y = 0;
@@ -38,9 +39,9 @@ public:
 class MyGame {
 // group things depending on data type
 public:
+	SDL_Surface* imgSurface;
 	SDL_Rect player1 = { 200, 0, 20, 60 };
-	SDL_Rect player2 = { 580, 0, 20, 60 }; // change the width
-	bool firstplayeractive;
+	SDL_Rect player2 = { 580, 0, 20, 60 };
 	SDL_Rect FirstPlayerScore; //create a rect
 	SDL_Rect SecondPlayerScore; //create a rect
 	Mix_Chunk* sound = Mix_LoadWAV("backgroundretro.wav");
@@ -60,12 +61,10 @@ public:
 	SDL_Color orange = { 255, 165, 0 };
 	std::string convertPlayer1Score;
 	std::string convertPlayer2Score;
-	//bool notPause = true;
 	const char* backgroundMusic = "backgroundretro.wav";
 	const char* scoreSoundEffect = "test.wav";
 	int repeatAudio;
-	bool player1Active = false;
-	bool player2Active = false;
+
 
 
 public:
@@ -82,6 +81,7 @@ public:
 	//add an arg for colour so you can use different colours.
 	void init_font();
 	void init_audio();
+	void init_image();
 	void play_sound(int repeatAudio);
 	void game_over();;
 	void play_background_music();

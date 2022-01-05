@@ -188,6 +188,18 @@ void MyGame::render(SDL_Renderer* renderer) {
 		//SDL_SetRenderDrawColor(renderer,0, 0, 0, 0);
 		SDL_RenderFillRect(renderer, &rect);
 	}
+	int texture_width = 200;
+	int texture_height = 200;
+
+	SDL_Rect dst = { 100,100, texture_height, texture_width };
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgSurface);
+	if (texture != nullptr) {
+		SDL_RenderCopy(renderer, texture, NULL, &dst);
+		SDL_DestroyTexture(texture);
+	}
+	else {
+		std::cout << "texture is nullptr!" << std::endl;
+	}
 }
 
 
@@ -274,6 +286,17 @@ void MyGame::game_over() {
 		isGameOver = true;
 	}
 }
+void MyGame::init_image() {
+	imgSurface = NULL;
+	imgSurface = IMG_Load("download.jpg");
+	if (imgSurface != nullptr) {
+		std::cout << " End game picture loaded\n" << std::endl;
+	}
+	else {
+		std::cout << "Eng game picture is NOT loaded\n" << std::endl;
+	}
+}
+
 
 void MyGame::player_left()
 {
