@@ -12,10 +12,10 @@
 static struct GameData {
 	int player1Y = 0;
 	int player2Y = 0;
-	int ballX = 0;
-	int ballY = 0;
-	int cx;
-	int cy;
+	//int ballX = 0;
+	//int ballY = 0;
+	//int cx;
+	//int cy;
 } game_data;
 
 // single particle 
@@ -40,30 +40,41 @@ class MyGame {
 // group things depending on data type
 public:
 	SDL_Surface* imgSurface;
+
 	SDL_Rect player1 = { 200, 0, 20, 60 };
 	SDL_Rect player2 = { 580, 0, 20, 60 };
 	SDL_Rect FirstPlayerScore; //create a rect
 	SDL_Rect SecondPlayerScore; //create a rect
+
 	Mix_Chunk* sound = Mix_LoadWAV("backgroundretro.wav");
+
 	int oldPlayer1Score = 0;
 	int oldPlayer2Score = 0;
-	const char* firstPlayerScoreText = "0";
-	const char* secondPlayerScoreText = "0";
 	int newPlayer1Score = 0;
 	int newPlayer2Score = 0;
+	int repeatAudio;
+
+	const char* firstPlayerScoreText = "0";
+	const char* secondPlayerScoreText = "0";
+	
+
 	bool player1ScoreChanged = false;
 	bool player2ScoreChanged = false;
 	bool player1SameScore = false;
 	bool player2SameScore = false;
 	bool isGameOver = false;
+
 	TTF_Font* font;
+	
 	SDL_Color blue = { 0, 0, 255 };
 	SDL_Color orange = { 255, 165, 0 };
+
 	std::string convertPlayer1Score;
 	std::string convertPlayer2Score;
+
 	const char* backgroundMusic = "backgroundretro.wav";
 	const char* scoreSoundEffect = "test.wav";
-	int repeatAudio;
+	
 
 
 
@@ -76,7 +87,7 @@ public:
 	void update();
 	void render(SDL_Renderer* renderer);
 
-	void ball(SDL_Renderer* renderer, int cx, int cy, float r);
+	/*void ball(SDL_Renderer* renderer, int cx, int cy, float r);*/
 	void renderScore(SDL_Renderer* renderer, const char* firstPlayerScore, const char* secondPlayerScore);
 	//add an arg for colour so you can use different colours.
 	void init_font();
@@ -87,7 +98,6 @@ public:
 	void play_background_music();
 	void select_audio(const char* audioFileName);
 	bool display_text(SDL_Renderer* renderer, const char* textToDisply);
-	void player_left();
 	void particleEffect();
 	// detects the first key pressed and then sets bool firstplayer joined to true
 private:
@@ -97,59 +107,19 @@ private:
 	}
 	
 };
-//const int TOTAL_PARTICLES = 20;
-//class Particle {
-//private:
-//	SDL_Color blue = { 0, 0, 255 };
-//	SDL_Color orange = { 255, 165, 0 };
-//	//Offsets
-//	int x, y;
-//
-//	//Current frame of animation
-//	// lifespan of particle and is used in is dead method
-//	int frame;
-//
-//	//Type of particle
-//	//SDL_Surface* type;
-//	SDL_Color type;
-//
-//public:
-//	//Constructor
-//	Particle(int X, int Y);
-//
-//	//Shows the particle
-//	void show();
-//
-//	//Checks if particle is dead
-//	bool is_dead();
-//
-//};
-//class Ball {
-//private:
-//	//The offsets
-//	int x, y;
-//
-//	//The velocity of the dot
-//	// the movement of the circle
-//	int xVel, yVel;
-//
-//	//The particles
-//	Particle* particles[TOTAL_PARTICLES];
-//
-//public:
-//	//Initializes
-//	Ball();
-//
-//	//Cleans up particles
-//	~Ball();
-//
-//	void ball(SDL_Renderer* renderer, int cx, int cy, float r);
-//	//Shows the particles
-//	void show_particles();
-//
-//	//this method is not needed
-//	//Shows the dot
-//	void show();
-//};
+class Ball {
+public:
+	int ballX = 0;
+	int ballY = 0;
+	int cx;
+	int cy;
+	//SDL_Color defaultC = {255,225,0,224};
+	SDL_Color ballColour = { 255,225,0,224 };
+	//SDL_Color red{255,0,0};
+	//SDL_Color blue{255,0,0};
+
+public:
+	void ball(SDL_Renderer* renderer, int cx, int cy, float r,SDL_Colour ballColour);
+};
 
 #endif

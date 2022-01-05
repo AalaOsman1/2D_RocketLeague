@@ -9,6 +9,8 @@
 #include <sstream>
 #include <windows.h>
 
+Ball* ball = new Ball();
+
 Particle::Particle(double x, double y, double vel_x, double vel_y, int size, SDL_Color color) {
 
 	this->x = x;
@@ -29,12 +31,13 @@ void MyGame::on_receive(std::string cmd, std::vector<std::string>& args) {
 			if (args.size() == 4) {
 				game_data.player1Y = stoi(args.at(0));
 				game_data.player2Y = stoi(args.at(1));
-				game_data.ballX = stoi(args.at(2));
-				game_data.ballY = stoi(args.at(3));
+				ball->ballX = stoi(args.at(2));
+				ball->ballY = stoi(args.at(3));
 			}
 		}
-		else if (cmd == "SCORES") {
+		if (cmd == "SCORES") {
 			if (args.size() == 2) {
+				std::cout << "scores is working" << std::endl;
 				oldPlayer1Score = stoi(args.at(0));
 				//select_audio(scoreSoundEffect);
 				//play_sound(0);
@@ -43,12 +46,20 @@ void MyGame::on_receive(std::string cmd, std::vector<std::string>& args) {
 				//play_sound(0);
 			}
 		}
-		else {
-			std::cout << "Received: " << cmd << std::endl;
+		if (cmd == "HIT_WALL_RIGHTGAME_DATA") {
+			ball->ballColour = { 0, 0, 255, 255 };
+		}
+		else if (cmd == "HIT_WALL_LEFTGAME_DATA") {
+			ball->ballColour = { 255,0,0,255 };
+		}
+		if (cmd == "BALL_HIT_BAT1" || cmd == "BALL_HIT_BAT2" ||
+			cmd == "HIT_WALL_DOWN" || cmd == "HIT_WALL_UP") {
+			ball->ballColour = { 255, 255, 0, 255 };
+			//std::cout << "ball hit 1 or 2 and hit down or up happend" << std::endl;
 		}
 	}
 	else {
-		//std::cout << "Not recieving data from server" << std::endl;
+		std::cout << "Not recieving data from server" << std::endl;
 	}
 }
 
@@ -102,12 +113,8 @@ void MyGame::update() {
 
 	convertPlayer2Score = std::to_string(oldPlayer2Score);
 	secondPlayerScoreText = convertPlayer2Score.c_str();
-	//Ball* ball = new Ball();
-	//ball->show_particles();
 
-	//what is going on here?
 	for (auto p : particles) {
-
 		p->x += p->vel_x;
 		p->y += p->vel_y;
 		p->life -= 0.1;
@@ -117,27 +124,13 @@ void MyGame::update() {
 		else {
 			p->color.a = (Uint8)(p->life / 3.0) * 255;
 		}
-		//p->color.a = (Uint8)(p->life / 3.0) * 255;
-		//std::cout << +p->life << std::endl;
-		//if (p->life <= 0) {
-		//	p->color.a = 0;
-		//	//std::cout << "KILL PARTICLE" << std::endl;
-		//}
-		///*if (p->life <= 0) {
-		//	p->color.a = 0;
-		//}
-		//else {
-		//	p->color.a = (Uint8)(p->life / 3.0) * 255;
-		//}*/
 	}
-
 	game_over();
 }
-
-void MyGame::ball(SDL_Renderer* renderer, int cx, int cy, float r) {
-	SDL_SetRenderDrawColor(renderer, 255, 255, 0, 224);
-	game_data.cx = game_data.ballX + r;// gets the x value to the center
-	game_data.cy = game_data.ballY + r;// gets the y value to the center
+void Ball::ball(SDL_Renderer* renderer, int cx, int cy, float r, SDL_Colour ballColour) {
+	SDL_SetRenderDrawColor(renderer, this->ballColour.r, this->ballColour.g, this->ballColour.b, this->ballColour.a);
+	this->cx = this->ballX + r;// gets the x value to the center
+	this->cy = this->ballY + r;// gets the y value to the center
 	int sides = 360; //lines to the points
 	double a = 360.0 / sides; // angle between two points
 	int oldpointx = 0;
@@ -148,8 +141,8 @@ void MyGame::ball(SDL_Renderer* renderer, int cx, int cy, float r) {
 		int vx = cos(angles) * r;//angle between two points on the x and the length
 		int vy = sin(angles) * r;//angle between two points on the y and the length
 	   //we get the direction and then we find out the length by * r
-		int newpointx = vx + game_data.cx; // newpoint x and y are a point in the perimeter.
-		int newpointy = vy + game_data.cy;
+		int newpointx = vx + this->cx; // newpoint x and y are a point in the perimeter.
+		int newpointy = vy + this->cy;
 		if (i > 0) { // to check if points have been drawn
 		// check if something has been drawn before zero which shouldn't be
 			//new value going to be in the old value
@@ -157,22 +150,16 @@ void MyGame::ball(SDL_Renderer* renderer, int cx, int cy, float r) {
 		}
 		oldpointx = newpointx;
 		oldpointy = newpointy;
-		//std::cout << +game_data.cx << std::endl;
-		//std::cout << +game_data.cy << std::endl;
 	}
-	//SDL_RenderPresent(renderer);
 }
 
 void MyGame::render(SDL_Renderer* renderer) {
-	//Score* score = new Score();
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_RenderDrawRect(renderer, &player1);
 	SDL_RenderDrawRect(renderer, &player2);
 	SDL_RenderFillRect(renderer, &player1);
 	SDL_RenderFillRect(renderer, &player2);
-	//ball(renderer, game_data.cx, game_data.cy, 5);
-	//Ball* ball = new Ball();
-	ball(renderer, game_data.cx, game_data.cy, 5);
+	ball->ball(renderer, ball->cx, ball->cy, 5, ball->ballColour);
 	renderScore(renderer, firstPlayerScoreText, secondPlayerScoreText);
 	if (isGameOver) {
 		display_text(renderer, "Game Over");
@@ -181,14 +168,13 @@ void MyGame::render(SDL_Renderer* renderer) {
 	particleEffect();
 	for (Particle* p : particles) {
 		double random_value = rand() * 1.0 / RAND_MAX;
+		//display pixels
 		SDL_Rect rect = { (int)p->x, (int)p->y, p->size * 2, p->size * 2 };
 		SDL_SetRenderDrawColor(renderer, (Uint8)(255 * random_value), 255, 255, p->color.a);
-		//SDL_SetRenderDrawColor(renderer, (Uint8)(255 * random_value), 255, 0, p->color.a);
-		//SDL_SetRenderDrawColor(renderer, (Uint8)(255 * random_value), p->color.g, p->color.b, 0);
-		//SDL_SetRenderDrawColor(renderer,0, 0, 0, 0);
 		SDL_RenderFillRect(renderer, &rect);
 	}
-	int texture_width = 200;
+	//turn this all into a function
+	/*int texture_width = 200;
 	int texture_height = 200;
 
 	SDL_Rect dst = { 100,100, texture_height, texture_width };
@@ -199,11 +185,9 @@ void MyGame::render(SDL_Renderer* renderer) {
 	}
 	else {
 		std::cout << "texture is nullptr!" << std::endl;
-	}
+	}*/
 }
 
-
-//add an arg for colour so you can use different colours.
 void MyGame::init_font() {
 	if (font == nullptr) {
 		font = TTF_OpenFont("Sans-Bold.ttf", 72);
@@ -236,7 +220,7 @@ void MyGame::renderScore(SDL_Renderer* renderer, const char* firstPlayerScoreTex
 		if (surfaceScore2 != NULL) {
 			secondPlayer = SDL_CreateTextureFromSurface(renderer, surfaceScore2);
 			SDL_QueryTexture(secondPlayer, NULL, NULL, &w, &h);
-			SecondPlayerScore.x = 600, SecondPlayerScore.y = 50, SecondPlayerScore.w = w, SecondPlayerScore.h = h;
+			SecondPlayerScore.x = 700, SecondPlayerScore.y = 50, SecondPlayerScore.w = w, SecondPlayerScore.h = h;
 			SDL_RenderCopy(renderer, secondPlayer, NULL, &SecondPlayerScore);
 			SDL_FreeSurface(surfaceScore2);
 			SDL_DestroyTexture(secondPlayer);
@@ -247,8 +231,6 @@ void MyGame::renderScore(SDL_Renderer* renderer, const char* firstPlayerScoreTex
 		}
 	}
 
-	//Add these somewhere else
-	//SDL_FreeSurface(surfaceMessage);
 	//SDL_DestroyTexture(Message);
 	//TTF_Quit();
 	//TTF_CloseFont(font);
@@ -297,21 +279,13 @@ void MyGame::init_image() {
 	}
 }
 
-
-void MyGame::player_left()
-{
-	if (!isGameOver) {
-
-	}
-}
-
 bool MyGame::display_text(SDL_Renderer* renderer, const char* textToDisply)
 {
 	int fontsize = 24;
-	int t_width = 0; // width of the loaded font-texture
-	int t_height = 0; // height of the loaded font-texture
+	int t_width = 0;
+	int t_height = 0;
 	SDL_Color text_color = { 0,0,255 };
-	SDL_Texture* ftexture = NULL; // our font-texture
+	SDL_Texture* ftexture = NULL;
 
 	SDL_Surface* text_surface = TTF_RenderText_Solid(font, textToDisply, text_color);
 
@@ -343,9 +317,8 @@ bool MyGame::display_text(SDL_Renderer* renderer, const char* textToDisply)
 
 void MyGame::particleEffect() {
 
-
-	int x = game_data.cx + 10;
-	int y = game_data.cy;
+	int x = ball->cx + 10;
+	int y = ball->cy;
 
 	for (int i = 0; i < 5; i++) {
 
@@ -363,135 +336,4 @@ void MyGame::particleEffect() {
 }
 
 
-
-
-
-
-//Particle::Particle(int X, int Y)
-//{
-	//Set offsets are where the particles positions
-	//storing where the particles are going to be
-	//around the circle
-	//x = game_data.ballX - 5 + (rand() % 25);
-	//y = game_data.ballY - 5 + (rand() % 25);
-
-	//whatever the value of the ball - 5
-	//x = game_data.cx + 5;
-	//y = game_data.cy + 5;
-	//std::cout << +x << std::endl;
-	//std::cout << +y<< std::endl;
-
-	//Initialize animation
-	//frame = rand() % 5;
-
-	//Set type
-	//switch (rand() % 2)
-	//{
-	//case 0: type = blue; break;
-	//case 1: type = orange; break;
-		//add another colour later
-//	}
-//}
-//void Particle::show()
-//{
-//	// this method can be ignored for now.
-//	//Show image
-//	//apply_surface(x, y, type);
-//
-//	//Show shimmer
-//	//if (frame % 2 == 0)
-//	//{
-//		//apply_surface(x, y, shimmer, screen);
-//	//}
-//
-//	//Animate
-//	//frame++;
-//}
-//bool Particle::is_dead()
-//{
-//	if (frame > 10)
-//	{
-//		return true;
-//	}
-//
-//	return false;
-//}
-//Ball::Ball()
-//{
-//	//Initialize the offsets
-//	// maybe this needs to be equal to game_data.cx
-//	x = 0;
-//	y = 0;
-//
-//	// this is the ball information not the particle?
-//	xVel = 0;
-//	yVel = 0;
-//
-//	//Initialize particles
-//	for (int p = 0; p < TOTAL_PARTICLES; p++)
-//	{
-//		particles[p] = new Particle(x, y);
-//	}
-//}
-//Ball::~Ball()
-//{
-//	//Delete particles
-//	for (int p = 0; p < TOTAL_PARTICLES; p++)
-//	{
-//		delete particles[p];
-//	}
-//}
-//void Ball::show_particles()
-//{
-//	//Go through particles
-//	for (int p = 0; p < TOTAL_PARTICLES; p++)
-//	{
-//		//Delete and replace dead particles
-//		if (particles[p]->is_dead() == true)
-//		{
-//			delete particles[p];
-//
-//			particles[p] = new Particle(x, y);
-//		}
-//	}
-//
-//	//Show particles
-//	for (int p = 0; p < TOTAL_PARTICLES; p++)
-//	{
-//		particles[p]->show();
-//		//std::cout << +p << std::endl;
-//	}
-//}
-//
-////void MyGame::destroy() {
-////	Mix_FreeChunk(sound);
-////	sound = nullptr;
-////
-////	Mix_CloseAudio();
-//
-//void Ball::ball(SDL_Renderer* renderer, int cx, int cy, float r) {
-//	SDL_SetRenderDrawColor(renderer, 255, 255, 0, 224);
-//	game_data.cx = game_data.ballX + r;// gets the x value to the center
-//	game_data.cy = game_data.ballY + r;// gets the y value to the center
-//	int sides = 360; //lines to the points
-//	double a = 360.0 / sides; // angle between two points
-//	int oldpointx = 0;
-//	int oldpointy = 0;
-//
-//	for (int i = 0; i <= sides; i++) {
-//		double angles = a * i;// gives you the angle.
-//		int vx = cos(angles) * r;//angle between two points on the x and the length
-//		int vy = sin(angles) * r;//angle between two points on the y and the length
-//	   //we get the direction and then we find out the length by * r
-//		int newpointx = vx + game_data.cx; // newpoint x and y are a point in the perimeter.
-//		int newpointy = vy + game_data.cy;
-//		if (i > 0) { // to check if points have been drawn
-//		// check if something has been drawn before zero which shouldn't be
-//			//new value going to be in the old value
-//			SDL_RenderDrawLine(renderer, oldpointx, oldpointy, newpointx, newpointy);
-//		}
-//		oldpointx = newpointx;
-//		oldpointy = newpointy;
-//	}
-//}
 
