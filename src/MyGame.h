@@ -12,10 +12,6 @@
 static struct GameData {
 	int player1Y = 0;
 	int player2Y = 0;
-	//int ballX = 0;
-	//int ballY = 0;
-	//int cx;
-	//int cy;
 } game_data;
 
 // single particle 
@@ -23,28 +19,29 @@ class Particle {
 public:
 	double x;
 	double y;
+	double pvx;
+	double pvy;
+	//when life is zero it is destroyed
+	double lifeSpan = 1.0;
+	//double expireTime;
+	//double decay;
+	//particle on top to be blended with the bottom
 
-	double vel_x;
-	double vel_y;
-
-	double life;
-
-	int size;
+	int radius;
 	SDL_Color color;
 
-	Particle(double x, double y, double vel_x, double vel_y, int size, SDL_Color color);
-
+	Particle(double x, double y, double pvx, double pvy, int radius, SDL_Color color, double lifeSpan);
 };
 
 class MyGame {
-// group things depending on data type
+	// group things depending on data type
 public:
 	SDL_Surface* imgSurface;
 
 	SDL_Rect player1 = { 200, 0, 20, 60 };
 	SDL_Rect player2 = { 580, 0, 20, 60 };
-	SDL_Rect FirstPlayerScore; //create a rect
-	SDL_Rect SecondPlayerScore; //create a rect
+	SDL_Rect FirstPlayerScore; 
+	SDL_Rect SecondPlayerScore; 
 
 	Mix_Chunk* sound = Mix_LoadWAV("backgroundretro.wav");
 
@@ -56,7 +53,6 @@ public:
 
 	const char* firstPlayerScoreText = "0";
 	const char* secondPlayerScoreText = "0";
-	
 
 	bool player1ScoreChanged = false;
 	bool player2ScoreChanged = false;
@@ -65,7 +61,7 @@ public:
 	bool isGameOver = false;
 
 	TTF_Font* font;
-	
+
 	SDL_Color blue = { 0, 0, 255 };
 	SDL_Color orange = { 255, 165, 0 };
 
@@ -74,8 +70,7 @@ public:
 
 	const char* backgroundMusic = "backgroundretro.wav";
 	const char* scoreSoundEffect = "test.wav";
-	
-
+	const char* winnerMessage;
 
 
 public:
@@ -87,25 +82,29 @@ public:
 	void update();
 	void render(SDL_Renderer* renderer);
 
-	/*void ball(SDL_Renderer* renderer, int cx, int cy, float r);*/
-	void renderScore(SDL_Renderer* renderer, const char* firstPlayerScore, const char* secondPlayerScore);
+	void render_score(SDL_Renderer* renderer, const char* firstPlayerScore, const char* secondPlayerScore);
 	//add an arg for colour so you can use different colours.
 	void init_font();
 	void init_audio();
 	void init_image();
 	void play_sound(int repeatAudio);
-	void game_over();;
+	void game_over();
 	void play_background_music();
 	void select_audio(const char* audioFileName);
-	bool display_text(SDL_Renderer* renderer, const char* textToDisply);
-	void particleEffect();
+	void display_text(SDL_Renderer* renderer, const char* textToDisply);
+	void display_image(SDL_Renderer* renderer);
+	void show_particles();
+	
 	// detects the first key pressed and then sets bool firstplayer joined to true
 private:
 	std::vector<Particle*> particles;
 	double get_random() {
 		return rand() * 1.0 / RAND_MAX;
 	}
-	
+	//bool isAlive() {
+	//return lifeSpan >0
+	//}
+
 };
 class Ball {
 public:
@@ -119,7 +118,7 @@ public:
 	//SDL_Color blue{255,0,0};
 
 public:
-	void ball(SDL_Renderer* renderer, int cx, int cy, float r,SDL_Colour ballColour);
+	void ball(SDL_Renderer* renderer, int cx, int cy, float r, SDL_Colour ballColour);
 };
 
 #endif

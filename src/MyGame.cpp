@@ -8,19 +8,18 @@
 #include <iostream>
 #include <sstream>
 #include <windows.h>
-
 Ball* ball = new Ball();
-
-Particle::Particle(double x, double y, double vel_x, double vel_y, int size, SDL_Color color) {
+Particle::Particle(double x, double y, double pvx, double pvy, int radius, SDL_Color color, double lifeSpan) {
 
 	this->x = x;
 	this->y = y;
-	this->vel_x = vel_x;
-	this->vel_y = vel_y;
-	this->size = size;
+	this->pvx = pvx;
+	this->pvy = pvy;
+	this->radius = radius;
 	this->color = color;
-	this->life = 1.0 * 10;
-	//this->life = 10;
+	//this->expireTime = expireTime;
+	//this->decay = 0.016 / expireTime;
+	this->lifeSpan = 1.0 * 10;
 }
 
 void MyGame::on_receive(std::string cmd, std::vector<std::string>& args) {
@@ -113,16 +112,18 @@ void MyGame::update() {
 
 	convertPlayer2Score = std::to_string(oldPlayer2Score);
 	secondPlayerScoreText = convertPlayer2Score.c_str();
-
+	
+// move the particles
 	for (auto p : particles) {
-		p->x += p->vel_x;
-		p->y += p->vel_y;
-		p->life -= 0.1;
-		if (p->life <= 0) {
+		p->x += p->pvx;
+		p->y += p->pvy;
+		p->lifeSpan -= 0.1;
+		//p->lifeSpan -= p->decay;
+		if (p->lifeSpan <= 0) {
 			p->color.a = 0;
 		}
 		else {
-			p->color.a = (Uint8)(p->life / 3.0) * 255;
+			p->color.a = (Uint8)(p->lifeSpan / 3.0) * 255;
 		}
 	}
 	game_over();
@@ -160,32 +161,35 @@ void MyGame::render(SDL_Renderer* renderer) {
 	SDL_RenderFillRect(renderer, &player1);
 	SDL_RenderFillRect(renderer, &player2);
 	ball->ball(renderer, ball->cx, ball->cy, 5, ball->ballColour);
-	renderScore(renderer, firstPlayerScoreText, secondPlayerScoreText);
+	render_score(renderer, firstPlayerScoreText, secondPlayerScoreText);
 	if (isGameOver) {
-		display_text(renderer, "Game Over");
+		display_text(renderer, winnerMessage);
 	}
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_ADD);
-	particleEffect();
+	show_particles();
 	for (Particle* p : particles) {
 		double random_value = rand() * 1.0 / RAND_MAX;
 		//display pixels
-		SDL_Rect rect = { (int)p->x, (int)p->y, p->size * 2, p->size * 2 };
+		SDL_Rect rect = { (int)p->x, (int)p->y, p->radius * 2, p->radius * 2 };
 		SDL_SetRenderDrawColor(renderer, (Uint8)(255 * random_value), 255, 255, p->color.a);
 		SDL_RenderFillRect(renderer, &rect);
 	}
+	//if (isGameOver) {
+	//	display_image(renderer);
+	//}
 	//turn this all into a function
-	/*int texture_width = 200;
-	int texture_height = 200;
+	//int texture_width = 200;
+	//int texture_height = 200;
 
-	SDL_Rect dst = { 100,100, texture_height, texture_width };
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgSurface);
-	if (texture != nullptr) {
-		SDL_RenderCopy(renderer, texture, NULL, &dst);
-		SDL_DestroyTexture(texture);
-	}
-	else {
-		std::cout << "texture is nullptr!" << std::endl;
-	}*/
+	//SDL_Rect dst = { 100,100, texture_height, texture_width };
+	//SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgSurface);
+	//if (texture != nullptr) {
+	//	SDL_RenderCopy(renderer, texture, NULL, &dst);
+	//	SDL_DestroyTexture(texture);
+	//}
+	//else {
+	//	std::cout << "texture is nullptr!" << std::endl;
+	//}
 }
 
 void MyGame::init_font() {
@@ -194,7 +198,7 @@ void MyGame::init_font() {
 	}
 }
 
-void MyGame::renderScore(SDL_Renderer* renderer, const char* firstPlayerScoreText, const char* secondPlayerScoreText) {
+void MyGame::render_score(SDL_Renderer* renderer, const char* firstPlayerScoreText, const char* secondPlayerScoreText) {
 	SDL_Texture* firstPlayer;
 	SDL_Texture* secondPlayer;
 	int w, h;
@@ -204,7 +208,7 @@ void MyGame::renderScore(SDL_Renderer* renderer, const char* firstPlayerScoreTex
 		if (surfaceScore1 != NULL) {
 			firstPlayer = SDL_CreateTextureFromSurface(renderer, surfaceScore1);
 			SDL_QueryTexture(firstPlayer, NULL, NULL, &w, &h);
-			FirstPlayerScore.x = 50, FirstPlayerScore.y = 50, FirstPlayerScore.w = w, FirstPlayerScore.h = h;
+			FirstPlayerScore.x = 100, FirstPlayerScore.y = 50, FirstPlayerScore.w = w, FirstPlayerScore.h = h;
 			SDL_RenderCopy(renderer, firstPlayer, NULL, &FirstPlayerScore);
 			SDL_FreeSurface(surfaceScore1);
 			SDL_DestroyTexture(firstPlayer);
@@ -220,7 +224,7 @@ void MyGame::renderScore(SDL_Renderer* renderer, const char* firstPlayerScoreTex
 		if (surfaceScore2 != NULL) {
 			secondPlayer = SDL_CreateTextureFromSurface(renderer, surfaceScore2);
 			SDL_QueryTexture(secondPlayer, NULL, NULL, &w, &h);
-			SecondPlayerScore.x = 700, SecondPlayerScore.y = 50, SecondPlayerScore.w = w, SecondPlayerScore.h = h;
+			SecondPlayerScore.x = 670, SecondPlayerScore.y = 50, SecondPlayerScore.w = w, SecondPlayerScore.h = h;
 			SDL_RenderCopy(renderer, secondPlayer, NULL, &SecondPlayerScore);
 			SDL_FreeSurface(surfaceScore2);
 			SDL_DestroyTexture(secondPlayer);
@@ -265,6 +269,11 @@ void MyGame::play_background_music() {
 }
 void MyGame::game_over() {
 	if (oldPlayer1Score == 7 || oldPlayer2Score == 7) {
+		winnerMessage = "Player 1 won";
+		isGameOver = true;
+	}
+	else if (oldPlayer2Score == 7) {
+		winnerMessage = "Player 2 won";
 		isGameOver = true;
 	}
 }
@@ -279,7 +288,7 @@ void MyGame::init_image() {
 	}
 }
 
-bool MyGame::display_text(SDL_Renderer* renderer, const char* textToDisply)
+void MyGame::display_text(SDL_Renderer* renderer, const char* textToDisply)
 {
 	int fontsize = 24;
 	int t_width = 0;
@@ -312,20 +321,34 @@ bool MyGame::display_text(SDL_Renderer* renderer, const char* textToDisply)
 			SDL_DestroyTexture(ftexture);
 		}
 	}
-	return true;
 }
 
-void MyGame::particleEffect() {
+void MyGame::display_image(SDL_Renderer* renderer)
+{
+	int texture_width = 200;
+	int texture_height = 200;
+	SDL_Rect dst = { 100,100, texture_height, texture_width };
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgSurface);
+	if (texture != nullptr) {
+		SDL_RenderCopy(renderer, texture, NULL, &dst);
+		SDL_DestroyTexture(texture);
+	}
+	else {
+		std::cout << "texture is nullptr!" << std::endl;
+	}
+}
+
+void MyGame::show_particles() {
 
 	int x = ball->cx + 10;
 	int y = ball->cy;
 
 	for (int i = 0; i < 5; i++) {
 
-		double vel_x = get_random();
-		double vel_y = get_random();
+		double pvx = get_random();
+		double pvy = get_random();
 
-		particles.push_back(new Particle(x, y, vel_x, vel_y, 1, { 255,0,0,0 }));
+		particles.push_back(new Particle(x, y, pvx, pvy, 1, { 255,0,0,0 }, 10));
 		x++;
 
 		if (x == 30) {
