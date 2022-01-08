@@ -131,7 +131,7 @@ int run_game() {
 		std::cout << "Failed to create renderer" << SDL_GetError() << std::endl;
 		return -1;
 	}
-	//game->init_audio();
+	///game->init_audio();
 	//game->play_background_music();
 	loop(renderer);
 
@@ -146,7 +146,6 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 	int result = TTF_Init();
-	//srand(SDL_GetTicks());
 	game->init_font();
 	game->init_image();
 	// Initialize SDL_net
@@ -177,6 +176,7 @@ int main(int argc, char** argv) {
 
 	run_game();
 
+	game->destroy();
 	delete game;
 
 	SDLNet_TCP_Close(socket);

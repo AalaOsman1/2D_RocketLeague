@@ -21,16 +21,14 @@ public:
 	double y;
 	double pvx;
 	double pvy;
-	//when life is zero it is destroyed
 	double lifeSpan = 1.0;
-	//double expireTime;
-	//double decay;
-	//particle on top to be blended with the bottom
 
 	int radius;
 	SDL_Color color;
 
 	Particle(double x, double y, double pvx, double pvy, int radius, SDL_Color color, double lifeSpan);
+public:
+	bool isAlive();
 };
 
 class MyGame {
@@ -40,8 +38,8 @@ public:
 
 	SDL_Rect player1 = { 200, 0, 20, 60 };
 	SDL_Rect player2 = { 580, 0, 20, 60 };
-	SDL_Rect FirstPlayerScore; 
-	SDL_Rect SecondPlayerScore; 
+	SDL_Rect FirstPlayerScore;
+	SDL_Rect SecondPlayerScore;
 
 	Mix_Chunk* sound = Mix_LoadWAV("backgroundretro.wav");
 
@@ -62,8 +60,9 @@ public:
 
 	TTF_Font* font;
 
-	SDL_Color blue = { 0, 0, 255 };
-	SDL_Color orange = { 255, 165, 0 };
+	SDL_Color player2Blue = { 0, 0, 255 };
+	SDL_Color Player1Red = { 255,0,0,255 };
+	//SDL_Color orange = { 255, 165, 0 };
 
 	std::string convertPlayer1Score;
 	std::string convertPlayer2Score;
@@ -82,7 +81,7 @@ public:
 	void update();
 	void render(SDL_Renderer* renderer);
 
-	void render_score(SDL_Renderer* renderer, const char* firstPlayerScore, const char* secondPlayerScore);
+	void render_scores(SDL_Renderer* renderer, const char* firstPlayerScore, const char* secondPlayerScore);
 	//add an arg for colour so you can use different colours.
 	void init_font();
 	void init_audio();
@@ -94,17 +93,13 @@ public:
 	void display_text(SDL_Renderer* renderer, const char* textToDisply);
 	void display_image(SDL_Renderer* renderer);
 	void show_particles();
-	
+	void destroy();
 	// detects the first key pressed and then sets bool firstplayer joined to true
 private:
 	std::vector<Particle*> particles;
 	double get_random() {
 		return rand() * 1.0 / RAND_MAX;
 	}
-	//bool isAlive() {
-	//return lifeSpan >0
-	//}
-
 };
 class Ball {
 public:
@@ -112,10 +107,8 @@ public:
 	int ballY = 0;
 	int cx;
 	int cy;
-	//SDL_Color defaultC = {255,225,0,224};
+	
 	SDL_Color ballColour = { 255,225,0,224 };
-	//SDL_Color red{255,0,0};
-	//SDL_Color blue{255,0,0};
 
 public:
 	void ball(SDL_Renderer* renderer, int cx, int cy, float r, SDL_Colour ballColour);

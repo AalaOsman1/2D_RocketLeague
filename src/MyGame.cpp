@@ -8,7 +8,9 @@
 #include <iostream>
 #include <sstream>
 #include <windows.h>
+
 Ball* ball = new Ball();
+
 Particle::Particle(double x, double y, double pvx, double pvy, int radius, SDL_Color color, double lifeSpan) {
 
 	this->x = x;
@@ -17,16 +19,12 @@ Particle::Particle(double x, double y, double pvx, double pvy, int radius, SDL_C
 	this->pvy = pvy;
 	this->radius = radius;
 	this->color = color;
-	//this->expireTime = expireTime;
-	//this->decay = 0.016 / expireTime;
 	this->lifeSpan = 1.0 * 10;
 }
-
 void MyGame::on_receive(std::string cmd, std::vector<std::string>& args) {
 	//checking the game state and if the client is getting data from server
 	if (!isGameOver && cmd != " ") {
 		if (cmd == "GAME_DATA") {
-			// we should have exactly 4 arguments
 			if (args.size() == 4) {
 				game_data.player1Y = stoi(args.at(0));
 				game_data.player2Y = stoi(args.at(1));
@@ -54,7 +52,6 @@ void MyGame::on_receive(std::string cmd, std::vector<std::string>& args) {
 		if (cmd == "BALL_HIT_BAT1" || cmd == "BALL_HIT_BAT2" ||
 			cmd == "HIT_WALL_DOWN" || cmd == "HIT_WALL_UP") {
 			ball->ballColour = { 255, 255, 0, 255 };
-			//std::cout << "ball hit 1 or 2 and hit down or up happend" << std::endl;
 		}
 	}
 	else {
@@ -112,21 +109,28 @@ void MyGame::update() {
 
 	convertPlayer2Score = std::to_string(oldPlayer2Score);
 	secondPlayerScoreText = convertPlayer2Score.c_str();
-	
+
 // move the particles
 	for (auto p : particles) {
 		p->x += p->pvx;
 		p->y += p->pvy;
 		p->lifeSpan -= 0.1;
-		//p->lifeSpan -= p->decay;
 		if (p->lifeSpan <= 0) {
 			p->color.a = 0;
+		}
+		else if (isGameOver && !p->isAlive()) {
+			p->color.a = 0;
+			
 		}
 		else {
 			p->color.a = (Uint8)(p->lifeSpan / 3.0) * 255;
 		}
 	}
 	game_over();
+}
+bool Particle::isAlive() {
+	return lifeSpan > 0;
+
 }
 void Ball::ball(SDL_Renderer* renderer, int cx, int cy, float r, SDL_Colour ballColour) {
 	SDL_SetRenderDrawColor(renderer, this->ballColour.r, this->ballColour.g, this->ballColour.b, this->ballColour.a);
@@ -156,12 +160,13 @@ void Ball::ball(SDL_Renderer* renderer, int cx, int cy, float r, SDL_Colour ball
 
 void MyGame::render(SDL_Renderer* renderer) {
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	//SDL_SetRenderDrawColor(renderer, 255, 165, 0, 255);
 	SDL_RenderDrawRect(renderer, &player1);
 	SDL_RenderDrawRect(renderer, &player2);
 	SDL_RenderFillRect(renderer, &player1);
 	SDL_RenderFillRect(renderer, &player2);
 	ball->ball(renderer, ball->cx, ball->cy, 5, ball->ballColour);
-	render_score(renderer, firstPlayerScoreText, secondPlayerScoreText);
+	render_scores(renderer, firstPlayerScoreText, secondPlayerScoreText);
 	if (isGameOver) {
 		display_text(renderer, winnerMessage);
 	}
@@ -174,14 +179,14 @@ void MyGame::render(SDL_Renderer* renderer) {
 		SDL_SetRenderDrawColor(renderer, (Uint8)(255 * random_value), 255, 255, p->color.a);
 		SDL_RenderFillRect(renderer, &rect);
 	}
-	//if (isGameOver) {
-	//	display_image(renderer);
-	//}
+	if (isGameOver) {
+		display_image(renderer);
+	}
 	//turn this all into a function
-	//int texture_width = 200;
-	//int texture_height = 200;
+	//int texture_width = 250;
+	//int texture_height = 250;
 
-	//SDL_Rect dst = { 100,100, texture_height, texture_width };
+	//SDL_Rect dst = { 300,200, texture_height, texture_width };
 	//SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgSurface);
 	//if (texture != nullptr) {
 	//	SDL_RenderCopy(renderer, texture, NULL, &dst);
@@ -194,17 +199,17 @@ void MyGame::render(SDL_Renderer* renderer) {
 
 void MyGame::init_font() {
 	if (font == nullptr) {
-		font = TTF_OpenFont("Sans-Bold.ttf", 72);
+		font = TTF_OpenFont("Smythe-Regular.ttf", 72);
 	}
 }
 
-void MyGame::render_score(SDL_Renderer* renderer, const char* firstPlayerScoreText, const char* secondPlayerScoreText) {
+void MyGame::render_scores(SDL_Renderer* renderer, const char* firstPlayerScoreText, const char* secondPlayerScoreText) {
 	SDL_Texture* firstPlayer;
 	SDL_Texture* secondPlayer;
 	int w, h;
 	if (player1ScoreChanged || player1SameScore) {
 		SDL_Surface* surfaceScore1 =
-			TTF_RenderText_Solid(font, firstPlayerScoreText, blue);
+			TTF_RenderText_Solid(font, firstPlayerScoreText, Player1Red);
 		if (surfaceScore1 != NULL) {
 			firstPlayer = SDL_CreateTextureFromSurface(renderer, surfaceScore1);
 			SDL_QueryTexture(firstPlayer, NULL, NULL, &w, &h);
@@ -220,7 +225,7 @@ void MyGame::render_score(SDL_Renderer* renderer, const char* firstPlayerScoreTe
 	}
 	if (player2ScoreChanged || player2SameScore) {
 		SDL_Surface* surfaceScore2 =
-			TTF_RenderText_Solid(font, secondPlayerScoreText, blue);
+			TTF_RenderText_Solid(font, secondPlayerScoreText, player2Blue);
 		if (surfaceScore2 != NULL) {
 			secondPlayer = SDL_CreateTextureFromSurface(renderer, surfaceScore2);
 			SDL_QueryTexture(secondPlayer, NULL, NULL, &w, &h);
@@ -235,9 +240,6 @@ void MyGame::render_score(SDL_Renderer* renderer, const char* firstPlayerScoreTe
 		}
 	}
 
-	//SDL_DestroyTexture(Message);
-	//TTF_Quit();
-	//TTF_CloseFont(font);
 }
 void MyGame::init_audio() {
 
@@ -279,7 +281,7 @@ void MyGame::game_over() {
 }
 void MyGame::init_image() {
 	imgSurface = NULL;
-	imgSurface = IMG_Load("download.jpg");
+	imgSurface = IMG_Load("ko.png");
 	if (imgSurface != nullptr) {
 		std::cout << " End game picture loaded\n" << std::endl;
 	}
@@ -290,7 +292,6 @@ void MyGame::init_image() {
 
 void MyGame::display_text(SDL_Renderer* renderer, const char* textToDisply)
 {
-	int fontsize = 24;
 	int t_width = 0;
 	int t_height = 0;
 	SDL_Color text_color = { 0,0,255 };
@@ -309,10 +310,10 @@ void MyGame::display_text(SDL_Renderer* renderer, const char* textToDisply)
 			std::cout << "Unable to create texture from rendered text!\n";
 		}
 		else {
-			t_width = text_surface->w; // assign the width of the texture
-			t_height = text_surface->h; // assign the height of the texture
+			t_width = text_surface->w; 
+			t_height = text_surface->h; 
 
-			int x = 200;
+			int x = 250;
 			int y = 100;
 			SDL_Rect dst = { x, y, t_width, t_height };
 			SDL_RenderCopy(renderer, ftexture, NULL, &dst);
@@ -327,7 +328,7 @@ void MyGame::display_image(SDL_Renderer* renderer)
 {
 	int texture_width = 200;
 	int texture_height = 200;
-	SDL_Rect dst = { 100,100, texture_height, texture_width };
+	SDL_Rect dst = { 300,200, texture_height, texture_width };
 	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imgSurface);
 	if (texture != nullptr) {
 		SDL_RenderCopy(renderer, texture, NULL, &dst);
@@ -358,5 +359,10 @@ void MyGame::show_particles() {
 	}
 }
 
+void MyGame::destroy() {
+	TTF_CloseFont(font);
+	TTF_Quit();
+	//audio stuff
+}
 
 
