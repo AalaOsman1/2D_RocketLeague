@@ -42,7 +42,6 @@ static int on_receive(void* socket_ptr) {
 
 		game->on_receive(cmd, args);
 
-		//std::cout << game->isGameOver << endl;
 		if (!is_running) {
 			break;
 		}
@@ -68,7 +67,7 @@ static int on_send(void* socket_ptr) {
 			}
 
 			game->messages.clear();
-
+				//before sending message to server check if the previous message was the same
 			cout << "Sending_TCP: " << message << endl;
 
 			SDLNet_TCP_Send(socket, message.c_str(), message.length());
@@ -131,8 +130,8 @@ int run_game() {
 		std::cout << "Failed to create renderer" << SDL_GetError() << std::endl;
 		return -1;
 	}
-	///game->init_audio();
-	//game->play_background_music();
+	game->init_audio();
+	game->play_background_music();
 	loop(renderer);
 
 	return 0;

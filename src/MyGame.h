@@ -9,12 +9,13 @@
 #include <SDL_mixer.h>
 #include <SDL_image.h>
 
+
 static struct GameData {
 	int player1Y = 0;
 	int player2Y = 0;
 } game_data;
 
-// single particle 
+
 class Particle {
 public:
 	double x;
@@ -24,15 +25,13 @@ public:
 	double lifeSpan = 1.0;
 
 	int radius;
+
 	SDL_Color color;
 
-	Particle(double x, double y, double pvx, double pvy, int radius, SDL_Color color, double lifeSpan);
-public:
-	bool isAlive();
+	Particle(double x, double y, double pvx, double pvy, int radius, SDL_Color color);
 };
 
 class MyGame {
-	// group things depending on data type
 public:
 	SDL_Surface* imgSurface;
 
@@ -57,20 +56,22 @@ public:
 	bool player1SameScore = false;
 	bool player2SameScore = false;
 	bool isGameOver = false;
-
+	
 	TTF_Font* font;
+
 
 	SDL_Color player2Blue = { 0, 0, 255 };
 	SDL_Color Player1Red = { 255,0,0,255 };
-	//SDL_Color orange = { 255, 165, 0 };
 
 	std::string convertPlayer1Score;
 	std::string convertPlayer2Score;
 
 	const char* backgroundMusic = "backgroundretro.wav";
-	const char* scoreSoundEffect = "test.wav";
+	const char* scoreSoundEffect = "scoreeffect.wav";
+	const char* hitSoundEffect = "hittingsound.wav";
 	const char* winnerMessage;
-
+	const char* messageCompress;
+	std::vector<Particle*> particles;
 
 public:
 	std::vector<std::string> messages;
@@ -82,7 +83,6 @@ public:
 	void render(SDL_Renderer* renderer);
 
 	void render_scores(SDL_Renderer* renderer, const char* firstPlayerScore, const char* secondPlayerScore);
-	//add an arg for colour so you can use different colours.
 	void init_font();
 	void init_audio();
 	void init_image();
@@ -92,14 +92,9 @@ public:
 	void select_audio(const char* audioFileName);
 	void display_text(SDL_Renderer* renderer, const char* textToDisply);
 	void display_image(SDL_Renderer* renderer);
-	void show_particles();
+	void show_particles(int x, int y);
+	void move_particles();
 	void destroy();
-	// detects the first key pressed and then sets bool firstplayer joined to true
-private:
-	std::vector<Particle*> particles;
-	double get_random() {
-		return rand() * 1.0 / RAND_MAX;
-	}
 };
 class Ball {
 public:
@@ -107,7 +102,7 @@ public:
 	int ballY = 0;
 	int cx;
 	int cy;
-	
+
 	SDL_Color ballColour = { 255,225,0,224 };
 
 public:
