@@ -300,28 +300,29 @@ void MyGame::show_particles(int x, int y) {
 	x = ball->cx;
 	y = ball->cy;
 
-	for (int i = 0; i < 5; i++) {
+	int n = 0;
+	while (n < 5) {
+		n++;
+			double pvx = rand() * 1.0 / RAND_MAX;
+			double pvy = rand() * 1.0 / RAND_MAX;
 
-		double pvx = rand() * 1.0 / RAND_MAX;
-		double pvy = rand() * 1.0 / RAND_MAX;
+			particles.push_back(new Particle(x, y, pvx, pvy, 1, { 255,0,0,0 }));
+			x++;
 
-		particles.push_back(new Particle(x, y, pvx, pvy, 1, { 255,0,0,0 }));
-		x++;
-
-		if (x == 30) {
-			y++;
-		}
+			if (x == 30) {
+				y++;
+			}
 	}
 }
 void MyGame::move_particles() {
-	for (Particle * particle : particles) {
-		particle->x += particle->pvx; 
+	for (Particle* particle : particles) {
+		particle->x += particle->pvx;
 		particle->y += particle->pvy;
 		particle->lifeSpan -= 0.1;
 		if (particle->lifeSpan <= 0) {
 			particle->color.a = 0;
 		}
-	else if (isGameOver) {
+		else if (isGameOver) {
 			particles.clear();
 		}
 		else {
